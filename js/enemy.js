@@ -76,9 +76,9 @@ export class Enemy {
         this.maxHp = this.hp;
     }
 
-    update(playerX, gameFrame, canvasWidth, canvasHeight, gridOffset) {
+    update(playerX, gameFrame, canvasWidth, canvasHeight, gridOffset, dt = 1) {
         if (this.state === 'entering') {
-            this.entryProgress += this.entrySpeed;
+            this.entryProgress += this.entrySpeed * dt;
             if (this.entryProgress >= 1) {
                 this.entryProgress = 1;
                 this.state = 'grid';
@@ -102,9 +102,9 @@ export class Enemy {
         }
         else if (this.state === 'diving') {
             // Plongée d'attaque agressive
-            this.y += 4.5;
-            this.x += Math.sin(this.y * 0.02) * 3; // Mouvement de sinusoïde léger
-            this.rotAngle += 0.08;
+            this.y += 4.5 * dt;
+            this.x += Math.sin(this.y * 0.02) * 3 * dt; // Mouvement de sinusoïde léger
+            this.rotAngle += 0.08 * dt;
 
             if (this.y > canvasHeight + 40) {
                 // Reclassement par le haut en grille

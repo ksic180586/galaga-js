@@ -20,7 +20,7 @@ export class Player {
         this.weaponUpgradeLevel = 1;
     }
 
-    update(keys, pointerX, isPointerDown, fireRateUpgradeLevel, projectiles) {
+    update(keys, pointerX, isPointerDown, fireRateUpgradeLevel, projectiles, dt = 1) {
         // Déplacement par clavier
         let dx = 0;
         if (keys['arrowleft'] || keys['q'] || keys['keya']) {
@@ -31,7 +31,7 @@ export class Player {
         }
 
         // Appliquer mouvement clavier
-        this.x += dx;
+        this.x += dx * dt;
 
         // Déplacement par drag (tactile ou souris)
         if (pointerX !== null) {
@@ -52,9 +52,9 @@ export class Player {
             this.lastShotTime = now;
         }
 
-        // Gestion invulnérabilité clignotante après dégât
+        // Gestion invulnérabilité clignotante après dégât (indépendante du framerate via dt)
         if (this.invulnerable) {
-            this.invulnTimer -= 16.7; // ~1 frame en ms
+            this.invulnTimer -= 16.67 * dt; // temps écoulé réel en ms (16.67ms à 60fps)
             if (this.invulnTimer <= 0) {
                 this.invulnerable = false;
             }

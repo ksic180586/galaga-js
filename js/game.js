@@ -347,40 +347,46 @@ class GameEngine {
     }
 
     // --- Boucle de Jeu Principale ---
-    tick() {
-        this.update();
+    tick(timestamp = 0) {
+        // Delta time normalisé à 60 fps (dt = 1.0 à 60 fps, 0.5 à 120 fps)
+        const rawDt = timestamp - (this._lastTimestamp || timestamp);
+        this._lastTimestamp = timestamp;
+        // Plafonner à 50 ms pour éviter les sauts après changement d'onglet
+        const dt = Math.min(rawDt, 50) / (1000 / 60);
+
+        this.update(dt);
         this.draw();
-        requestAnimationFrame(() => this.tick());
+        requestAnimationFrame((ts) => this.tick(ts));
     }
 
     // --- Logique d'Évolution (Update) ---
-    update() {
-        this.starfield.update();
+    update(dt = 1) {
+        this.starfield.update(dt);
 
         if (this.state !== 'PLAYING') {
             // Mettre à jour les particules en tâche de fond pour effet visuel continu
-            this.particles.forEach(p => p.update());
+            this.particles.forEach(p => p.update(dt));
             this.particles = this.particles.filter(p => p.alpha > 0);
             return;
         }
 
-        this.gameFrame++;
+        this.gameFrame += dt;
 
         // --- 1. Mouvement Grille Ennemi ---
         // Fait osciller les ennemis de gauche à droite
         const maxOffset = 30;
-        this.gridOffset += 0.4 * this.gridDirection;
+        this.gridOffset += 0.4 * this.gridDirection * dt;
         if (Math.abs(this.gridOffset) > maxOffset) {
             this.gridDirection *= -1;
         }
 
         // --- 2. Mise à jour Joueur ---
         if (this.player) {
-            this.player.update(this.keys, this.pointerX, this.isPointerDown, this.upgrades.firerate, this.projectiles);
+            this.player.update(this.keys, this.pointerX, this.isPointerDown, this.upgrades.firerate, this.projectiles, dt);
         }
 
         // --- 3. Lasers & Projectiles ---
-        this.projectiles.forEach(p => p.update());
+        this.projectiles.forEach(p => p.update(dt));
         // Filtrer les lasers sortis de l'écran
         this.projectiles = this.projectiles.filter(p => p.y > -20 && p.y < this.height + 20);
 
@@ -389,32 +395,32 @@ class GameEngine {
         const playerY = this.player ? this.player.y : this.height - 80;
 
         this.enemies.forEach(e => {
-            e.update(playerX, this.gameFrame, this.width, this.height, this.gridOffset);
+            e.update(playerX, this.gameFrame, this.width, this.height, this.gridOffset, dt);
 
             // Les ennemis attaquent de manière probabiliste si en grille
             if (e.state === 'grid' && e.type !== 'boss') {
-                const baseProb = 0.0006 + this.wave * 0.0002;
+                const baseProb = (0.0006 + this.wave * 0.0002) * dt;
                 if (Math.random() < baseProb) {
                     e.state = 'diving';
                 }
             }
 
             // Tirs ennemis périodiques
-            if (e.state !== 'entering' && Math.random() < e.shootProb) {
+            if (e.state !== 'entering' && Math.random() < e.shootProb * dt) {
                 this.enemyShoot(e);
             }
         });
 
         // --- 5. Cristaux & Particules ---
-        this.crystalsList.forEach(c => c.update(playerX, playerY, this.upgrades.magnet));
+        this.crystalsList.forEach(c => c.update(playerX, playerY, this.upgrades.magnet, dt));
         this.crystalsList = this.crystalsList.filter(c => c.y < this.height + 20 && !c.collected);
 
-        this.particles.forEach(p => p.update());
+        this.particles.forEach(p => p.update(dt));
         this.particles = this.particles.filter(p => p.alpha > 0);
 
-        // Décroissance secousses caméra
+        // Décroissance secousses caméra (indépendante du framerate via dt)
         if (this.shakeIntensity > 0) {
-            this.shakeIntensity *= 0.9;
+            this.shakeIntensity *= Math.pow(0.9, dt);
             if (this.shakeIntensity < 0.2) this.shakeIntensity = 0;
         }
 

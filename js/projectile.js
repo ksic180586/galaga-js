@@ -13,9 +13,9 @@ export class Projectile {
         this.height = isEnemy ? 12 : 16;
     }
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
+    update(dt = 1) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
     }
 
     draw(ctx) {

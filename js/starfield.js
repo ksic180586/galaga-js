@@ -26,11 +26,11 @@ export class Starfield {
         ];
     }
 
-    update() {
+    update(dt = 1) {
         // Déplacer les étoiles vers le bas
         this.layers.forEach(layer => {
             layer.stars.forEach(star => {
-                star.y += layer.speed;
+                star.y += layer.speed * dt;
                 if (star.y > this.height) {
                     star.y = 0;
                     star.x = Math.random() * this.width;
@@ -40,7 +40,7 @@ export class Starfield {
 
         // Déplacer doucement les nébuleuses
         this.nebulas.forEach(n => {
-            n.y += n.speed;
+            n.y += n.speed * dt;
             if (n.y - n.r > this.height) {
                 n.y = -n.r;
                 n.x = Math.random() * this.width;

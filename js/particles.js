@@ -15,12 +15,12 @@ export class Particle {
         this.size = Math.random() * 2.5 + 1;
     }
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vx *= 0.96; // Friction
-        this.vy *= 0.96;
-        this.alpha -= this.decay;
+    update(dt = 1) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.vx *= Math.pow(0.96, dt); // Friction indépendante du framerate
+        this.vy *= Math.pow(0.96, dt);
+        this.alpha -= this.decay * dt;
     }
 
     draw(ctx) {

@@ -14,8 +14,8 @@ export class Crystal {
         this.crystalVacuumRange = 400; // px
     }
 
-    update(playerX, playerY, magnetLevel) {
-        this.pulseTimer += 0.1;
+    update(playerX, playerY, magnetLevel, dt = 1) {
+        this.pulseTimer += 0.1 * dt;
 
         // Rayon d'attraction magnétique
         const vacuumRange = this.crystalVacuumRange + magnetLevel * 70;
@@ -27,12 +27,12 @@ export class Crystal {
             // Attraction fluide vers le joueur
             const force = (vacuumRange - dist) / vacuumRange;
             const speed = 8 * force + 1;
-            this.x += (dx / dist) * speed;
-            this.y += (dy / dist) * speed;
+            this.x += (dx / dist) * speed * dt;
+            this.y += (dy / dist) * speed * dt;
         } else {
             // Chute naturelle
-            this.y += this.vy;
-            this.x += Math.sin(this.pulseTimer) * 0.2;
+            this.y += this.vy * dt;
+            this.x += Math.sin(this.pulseTimer) * 0.2 * dt;
         }
     }
 
