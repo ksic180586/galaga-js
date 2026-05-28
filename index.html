@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Galaga: Neon Void | Space Arcade</title>
+    <meta name="description" content="Une réinterprétation moderne et ultra-stylisée en néon du classique jeu d'arcade Galaga. Pilotez, détruisez des nuées d'ennemis, améliorez votre vaisseau et grimpez dans le classement.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Cyber Diagnostics (Error boundary) -->
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errCard = document.createElement('div');
+            errCard.style.position = 'fixed';
+            errCard.style.top = '50%';
+            errCard.style.left = '50%';
+            errCard.style.transform = 'translate(-50%, -50%)';
+            errCard.style.width = '90%';
+            errCard.style.maxWidth = '450px';
+            errCard.style.background = 'rgba(15, 5, 20, 0.95)';
+            errCard.style.backdropFilter = 'blur(10px)';
+            errCard.style.border = '2px solid #ff007f';
+            errCard.style.borderRadius = '16px';
+            errCard.style.padding = '25px';
+            errCard.style.color = '#fff';
+            errCard.style.fontFamily = 'monospace';
+            errCard.style.zIndex = '999999';
+            errCard.style.boxShadow = '0 0 30px rgba(255, 0, 127, 0.4)';
+            errCard.innerHTML = 
+                '<h3 style="color:#ff007f;margin-bottom:12px;font-family:\'Orbitron\',sans-serif;letter-spacing:1px;">⚠️ ANOMALIE DETECTEE</h3>' +
+                '<p style="color:#a39cb4;font-size:12px;margin-bottom:15px;line-height:1.4;">Un dysfonctionnement critique a interrompu le système de vol.</p>' +
+                '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:12px;border-radius:8px;font-size:11px;word-break:break-all;color:#ffaa00;">' +
+                    '<strong>Détails :</strong> ' + message + '<br><br>' +
+                    '<strong>Fichier :</strong> ' + (source ? source.split("/").pop() : "Inconnu") + '<br>' +
+                    '<strong>Ligne :</strong> ' + lineno + ' | <strong>Col :</strong> ' + colno +
+                '</div>' +
+                '<button onclick="window.location.reload()" style="background:#ff007f;color:#fff;border:none;padding:10px 20px;border-radius:8px;margin-top:15px;cursor:pointer;width:100%;font-weight:bold;font-family:sans-serif;box-shadow:0 0 10px rgba(255,0,127,0.3);">REDEMARRER LE SYSTEME</button>';
+            document.body.appendChild(errCard);
+            return false;
+        };
+    </script>
+</head>
+<body>
+    <!-- Main Game Container -->
+    <div id="game-container">
+        <!-- Canvas de Rendu du Jeu -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- SUBTITLE/RETRO HUD -->
+        <div id="hud" class="ui-screen hidden">
+            <div class="hud-item" id="hud-score-container">
+                <span class="hud-label">SCORE</span>
+                <span class="hud-value" id="hud-score">000,000</span>
+            </div>
+            <div class="hud-item" id="hud-wave-container">
+                <span class="hud-label">VAGUE</span>
+                <span class="hud-value" id="hud-wave">1</span>
+            </div>
+            <div class="hud-item" id="hud-crystals-container">
+                <span class="hud-label">PLASMA</span>
+                <span class="hud-value text-neon-orange" id="hud-crystals">0</span>
+            </div>
+            <div class="hud-item" id="hud-shield-container">
+                <span class="hud-label">BOUCLIER</span>
+                <div class="shield-bar-bg">
+                    <div id="hud-shield-fill" class="shield-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MENU D'ACCUEIL -->
+        <div id="menu-screen" class="ui-screen active flex-center">
+            <div class="menu-content glass-card">
+                <h1 class="game-title">GALAGA<br><span class="text-neon-cyan">NEON VOID</span></h1>
+                <p class="game-tagline">Défiez le néant spatial dans un déluge de lumière et de plasma.</p>
+                
+                <div class="menu-actions">
+                    <button id="btn-play" class="btn btn-primary btn-glow-cyan">LANCER LE JEU</button>
+                    <button id="btn-commands" class="btn btn-secondary">COMMANDES</button>
+                </div>
+
+                <div class="leaderboard-preview">
+                    <h3>MEILLEUR SCORE</h3>
+                    <div class="high-score-display" id="best-score-display">000,000</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DES COMMANDES -->
+        <div id="commands-modal" class="ui-screen hidden flex-center">
+            <div class="modal-content glass-card">
+                <h2>COMMANDES</h2>
+                
+                <div class="commands-grid">
+                    <div class="command-row">
+                        <span class="command-key">← / A</span>
+                        <span class="command-key">→ / D</span>
+                        <span class="command-desc">Déplacer à gauche / droite</span>
+                    </div>
+                    <div class="command-row">
+                        <span class="command-key">ESPACE</span>
+                        <span class="command-desc">Tirer (Laser automatique disponible)</span>
+                    </div>
+                    <div class="command-row">
+                        <span class="command-key">P</span>
+                        <span class="command-desc">Mettre en pause le jeu</span>
+                    </div>
+                    <div class="command-row">
+                        <span class="command-key">TOUCHER / DRAG</span>
+                        <span class="command-desc">Déplacement tactile fluide (Mobile)</span>
+                    </div>
+                </div>
+
+                <button id="btn-close-commands" class="btn btn-secondary mt-20">RETOUR</button>
+            </div>
+        </div>
+
+        <!-- BOUTIQUE D'AMÉLIORATION (ENTRE VAGUES) -->
+        <div id="shop-screen" class="ui-screen hidden flex-center">
+            <div class="shop-content glass-card">
+                <h2>STATION D'AMÉLIORATION</h2>
+                <p class="shop-subtitle">Dépensez votre <span class="text-neon-orange">Plasma</span> pour renforcer votre cyber-chasseur.</p>
+                
+                <div class="crystal-balance">
+                    PLASMA DISPONIBLE : <span id="shop-crystals-count" class="text-neon-orange font-bold">0</span> ⚡
+                </div>
+
+                <div class="upgrades-list">
+                    <!-- Upgrade Card: Weapon -->
+                    <div class="upgrade-card" id="up-weapon">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">ARMEMENT</span>
+                            <span class="upgrade-desc">Ajoute des canons (Simple → Double → Triple → Méga Laser)</span>
+                        </div>
+                        <button class="btn btn-upgrade" id="btn-up-weapon" data-type="weapon">
+                            <span class="upgrade-cost">25 Plasma</span>
+                            <span class="upgrade-level">Niv. 1</span>
+                        </button>
+                    </div>
+
+                    <!-- Upgrade Card: Fire Rate -->
+                    <div class="upgrade-card" id="up-firerate">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">CADENCE DE TIR</span>
+                            <span class="upgrade-desc">Accélère la vitesse d'émission des tirs laser</span>
+                        </div>
+                        <button class="btn btn-upgrade" id="btn-up-firerate" data-type="firerate">
+                            <span class="upgrade-cost">15 Plasma</span>
+                            <span class="upgrade-level">Niv. 1</span>
+                        </button>
+                    </div>
+
+                    <!-- Upgrade Card: Shield -->
+                    <div class="upgrade-card" id="up-shield">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">BOUCLIER MAX</span>
+                            <span class="upgrade-desc">Ajoute un point de vie au bouclier d'énergie</span>
+                        </div>
+                        <button class="btn btn-upgrade" id="btn-up-shield" data-type="shield">
+                            <span class="upgrade-cost">20 Plasma</span>
+                            <span class="upgrade-level">Niv. 1</span>
+                        </button>
+                    </div>
+
+                    <!-- Upgrade Card: Magnet -->
+                    <div class="upgrade-card" id="up-magnet">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">AIMANT À PLASMA</span>
+                            <span class="upgrade-desc">Augmente la portée d'attraction des cristaux de plasma</span>
+                        </div>
+                        <button class="btn btn-upgrade" id="btn-up-magnet" data-type="magnet">
+                            <span class="upgrade-cost">10 Plasma</span>
+                            <span class="upgrade-level">Niv. 0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="btn-next-wave" class="btn btn-primary btn-glow-pink mt-20 w-100">COMMENCER LA VAGUE <span id="shop-next-wave-num">2</span></button>
+            </div>
+        </div>
+
+        <!-- ÉCRAN GAME OVER -->
+        <div id="game-over-screen" class="ui-screen hidden flex-center">
+            <div class="game-over-content glass-card">
+                <h1 class="text-neon-pink game-over-title">MISSION TERMINEE</h1>
+                <p class="game-over-subtitle">Votre vaisseau a succombé au vide sidéral.</p>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">VAGUE ATTEINTE</span>
+                        <span class="stat-value text-neon-cyan" id="go-wave">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">SCORE FINAL</span>
+                        <span class="stat-value text-neon-pink" id="go-score">000,000</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">PLASMA TOTAL</span>
+                        <span class="stat-value text-neon-orange" id="go-crystals">0</span>
+                    </div>
+                </div>
+
+                <!-- Formulaire Nouveau Record -->
+                <div id="new-record-section" class="hidden">
+                    <h3 class="text-neon-cyan">🏆 NOUVEAU RECORD !</h3>
+                    <p>Enregistrez vos initiales dans le classement de la galaxie :</p>
+                    <div class="input-row">
+                        <input type="text" id="player-name-input" maxlength="3" placeholder="AAA" autofocus autocomplete="off">
+                        <button id="btn-save-record" class="btn btn-primary">ENREGISTRER</button>
+                    </div>
+                </div>
+
+                <div class="leaderboard-section">
+                    <h3>CLASSEMENT LOCAL</h3>
+                    <div id="leaderboard-list">
+                        <!-- Rempli dynamiquement en JS -->
+                    </div>
+                </div>
+
+                <div class="menu-actions mt-20">
+                    <button id="btn-restart" class="btn btn-primary btn-glow-cyan">RECOMMENCER</button>
+                    <button id="btn-home" class="btn btn-secondary">MENU PRINCIPAL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAUSE OVERLAY -->
+        <div id="pause-screen" class="ui-screen hidden flex-center">
+            <div class="pause-content glass-card text-center">
+                <h1 class="text-neon-cyan">PAUSE</h1>
+                <p>Le temps galactique est suspendu.</p>
+                <button id="btn-resume" class="btn btn-primary btn-glow-cyan mt-20">REPRENDRE LA CHASSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Jeu -->
+    <script type="module" src="js/game.js"></script>
+</body>
+</html>
