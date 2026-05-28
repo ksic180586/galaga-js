@@ -214,24 +214,49 @@ class GameEngine {
     }
 
     handleResize() {
-        // Redimensionner dynamiquement pour garder les proportions adaptées sur mobile
+        // Redimensionner dynamiquement pour garder les proportions adaptées et gérer le mode borderless sur mobile
         const container = document.getElementById('game-container');
         const winW = window.innerWidth;
         const winH = window.innerHeight;
 
-                if (winW < 600 || winH < 800) {
-            // Mobile: scale down to fit while preserving aspect ratio
-            const scale = Math.min(winW / 600, winH / 800);
-            container.style.transform = `scale(${scale})`;
-            container.style.transformOrigin = 'center center';
-            // Ensure base size for scaling calculations
-            container.style.width = '600px';
-            container.style.height = '800px';
+        if (winW < 600 || winH < 800) {
+            // Mode MOBILE / BORDERLESS : pas de transform scale, on prend tout l'écran
+            container.style.transform = 'none';
+            container.style.width = '100%';
+            container.style.height = '100%';
+
+            // On garde une largeur virtuelle fixe à 600px
+            this.width = 600;
+            // On calcule la hauteur virtuelle proportionnelle pour occuper tout l'écran sans distorsion
+            this.height = Math.round(600 * (winH / winW));
         } else {
-            // Desktop: no scaling, keep original size
+            // Mode DESKTOP : Taille fixe cabinet d'arcade centrée
             container.style.transform = 'none';
             container.style.width = '600px';
             container.style.height = '800px';
+
+            this.width = 600;
+            this.height = 800;
+        }
+
+        // Mettre à jour la taille physique du buffer de dessin du Canvas
+        if (this.canvas) {
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+        }
+
+        // Mettre à jour les dimensions du fond étoilé
+        if (this.starfield) {
+            this.starfield.width = this.width;
+            this.starfield.height = this.height;
+        }
+
+        // Repositionner le joueur s'il est actif
+        if (this.player) {
+            this.player.canvasWidth = this.width;
+            this.player.canvasHeight = this.height;
+            // Assurer que le joueur est replacé correctement au bas de la nouvelle hauteur
+            this.player.y = this.height - 80;
         }
     }
 
