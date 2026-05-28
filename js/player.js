@@ -15,7 +15,7 @@ export class Player {
         this.lastShotTime = 0;
         this.invulnerable = false;
         this.invulnTimer = 0;
-        this.playerSpeed = 7;
+        this.playerSpeed = 12; // increased speed for more responsive controls
         this.baseFireRate = 400; // ms
         this.weaponUpgradeLevel = 1;
     }
@@ -34,10 +34,10 @@ export class Player {
         this.x += dx;
 
         // Déplacement par drag (tactile ou souris)
-        if (pointerX !== null && isPointerDown) {
-            // Interpolation douce (lerp) pour amorti premium
-            const targetX = Math.max(this.width / 2, Math.min(this.canvasWidth - this.width / 2, pointerX));
-            this.x += (targetX - this.x) * 0.25;
+        if (pointerX !== null) {
+            // Déplacement direct vers le pointeur, avec contrainte aux bords
+            const clampedX = Math.max(this.width / 2, Math.min(this.canvasWidth - this.width / 2, pointerX));
+            this.x = clampedX;
         }
 
         // Bloquer aux bordures

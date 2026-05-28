@@ -149,6 +149,14 @@ class GameEngine {
             } else if (e.key.toLowerCase() === 'p' && this.state === 'PAUSE') {
                 this.changeState('PLAYING');
             }
+
+            // Si une touche de déplacement est pressée, on passe en mode clavier
+            // (désactive le suivi souris jusqu'au prochain mouvement de souris)
+            const movKeys = ['arrowleft', 'arrowright', 'q', 'd'];
+            const movCodes = ['KeyA', 'KeyD'];
+            if (movKeys.includes(e.key.toLowerCase()) || movCodes.includes(e.code)) {
+                this.pointerX = null;
+            }
         });
 
         window.addEventListener('keyup', (e) => {
@@ -157,10 +165,11 @@ class GameEngine {
         });
 
         // Souris et Tactile pour drag fluide
-        const rect = this.canvas.getBoundingClientRect();
-
+        // On recalcule getBoundingClientRect() à chaque appel pour tenir compte
+        // du transform:scale() appliqué par handleResize()
         const setPointerX = (clientValX) => {
-            const relativeX = (clientValX - rect.left) / rect.width;
+            const r = this.canvas.getBoundingClientRect();
+            const relativeX = (clientValX - r.left) / r.width;
             this.pointerX = relativeX * this.width;
         };
 
@@ -170,8 +179,10 @@ class GameEngine {
             setPointerX(e.clientX);
         });
 
+        // Suivre la souris en permanence (pas seulement au clic)
+        // Repasser en mode souris dès que la souris bouge
         window.addEventListener('mousemove', (e) => {
-            if (!this.isPointerDown) return;
+            if (this.state !== 'PLAYING') return;
             setPointerX(e.clientX);
         });
 
@@ -208,13 +219,19 @@ class GameEngine {
         const winW = window.innerWidth;
         const winH = window.innerHeight;
 
-        if (winW < 600 || winH < 800) {
-            // Mobile adaptatif
+                if (winW < 600 || winH < 800) {
+            // Mobile: scale down to fit while preserving aspect ratio
             const scale = Math.min(winW / 600, winH / 800);
             container.style.transform = `scale(${scale})`;
             container.style.transformOrigin = 'center center';
+            // Ensure base size for scaling calculations
+            container.style.width = '600px';
+            container.style.height = '800px';
         } else {
+            // Desktop: no scaling, keep original size
             container.style.transform = 'none';
+            container.style.width = '600px';
+            container.style.height = '800px';
         }
     }
 
