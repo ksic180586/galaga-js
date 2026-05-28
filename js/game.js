@@ -208,7 +208,7 @@ class GameEngine {
         const winW = window.innerWidth;
         const winH = window.innerHeight;
 
-        if (winW < 600 || winH < 900) {
+        if (winW < 600 || winH < 800) {
             // Mobile adaptatif
             const scale = Math.min(winW / 600, winH / 800);
             container.style.transform = `scale(${scale})`;
